@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Blooms & Threads – Bhairahawa</title>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&family=Reenie+Beanie&family=Lora:ital,wght@0,400;0,500;1,400;1,500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --paper:#FDF8F0;
+  --paper2:#FAF3E6;
+  --paper3:#F5EDD8;
+  --line:#D4C4A0;
+  --ink:#2C1A0E;
+  --ink-light:#6B4C2A;
+  --rose:#C9837A;
+  --rose-light:#F2D4CC;
+  --sage:#7A9B6E;
+  --sage-light:#C8DDB8;
+  --thread:#B8860B;
+  --ring:#8B7355;
+  --shadow:rgba(44,26,14,0.18);
+}
+
+html{overflow:hidden;height:100%}
+body{
+  background:#8B6F47;
+  background-image:
+    repeating-linear-gradient(45deg,transparent,transparent 10px,rgba(0,0,0,0.03) 10px,rgba(0,0,0,0.03) 20px);
+  height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-family:'DM Sans',sans-serif;
+  overflow:hidden;
+}
+
+/* ── NOTEBOOK SHELL ── */
+.notebook{
+  width:820px;
+  height:580px;
+  position:relative;
+  filter:drop-shadow(0 30px 60px rgba(0,0,0,0.45));
+}
+
+/* spiral binding */
+.binding{
+  position:absolute;
+  left:-18px;
+  top:0;
+  bottom:0;
+  width:36px;
+  z-index:50;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:space-evenly;
+  padding:24px 0;
+}
+.ring{
+  width:28px;
+  height:22px;
+  border:4px solid var(--ring);
+  border-radius:50%;
+  background:linear-gradient(135deg,#C4A882,#8B7355);
+  box-shadow:inset 0 2px 4px rgba(0,0,0,0.3),0 2px 4px rgba(0,0,0,0.2);
+  position:relative;
+}
+.ring::after{
+  content:'';
+  position:absolute;
+  top:3px;left:3px;right:3px;
+  height:4px;
+  background:rgba(255,255,255,0.3);
+  border-radius:50%;
+}
+
+/* address bar */
+.addr-bar{
+  position:absolute;
+  top:-36px;left:0;right:0;
+  background:#7A4A4A;
+  border-radius:8px 8px 0 0;
+  padding:0.35rem 1.5rem;
+  display:flex;align-items:center;justify-content:space-between;
+  font-family:'DM Sans',sans-serif;
+  z-index:60;
+}
+.addr-item{display:flex;align-items:center;gap:6px;font-size:0.72rem;color:#F2D4CC;letter-spacing:0.04em}
+.addr-item svg{width:12px;height:12px;flex-shrink:0}
+.addr-socials{display:flex;gap:8px}
+.addr-socials a{width:22px;height:22px;border-radius:50%;border:1px solid rgba(242,212,204,0.35);display:flex;align-items:center;justify-content:center;text-decoration:none}
+
+/* ── PAGES STACK ── */
+.pages-stack{
+  position:relative;
+  width:100%;
+  height:100%;
+}
+
+/* stacked page shadows */
+.page-ghost{
+  position:absolute;
+  inset:0;
+  background:var(--paper3);
+  border-radius:4px 16px 16px 4px;
+  border:1px solid rgba(139,115,85,0.3);
+}
+.page-ghost:nth-child(1){transform:translateX(6px) translateY(4px) rotate(0.8deg);background:#EDE3C8}
+.page-ghost:nth-child(2){transform:translateX(3px) translateY(2px) rotate(0.3deg);background:#F0E8D0}
+
+/* ── ACTIVE PAGE ── */
+.page{
+  position:absolute;
+  inset:0;
+  background:var(--paper);
+  border-radius:4px 16px 16px 4px;
+  border:1px solid rgba(180,160,120,0.4);
+  overflow:hidden;
+  display:none;
+  animation:pageIn 0.45s cubic-bezier(0.22,1,0.36,1);
+}
+.page.active{display:flex;flex-direction:column}
+
+@keyframes pageIn{
+  from{opacity:0;transform:translateX(60px) rotate(2deg)}
+  to{opacity:1;transform:translateX(0) rotate(0deg)}
+}
+@keyframes pageOut{
+  from{opacity:1;transform:translateX(0)}
+  to{opacity:0;transform:translateX(-60px)}
+}
+
+/* ruled lines on pages */
+.page::before{
+  content:'';
+  position:absolute;
+  inset:0;
+  background-image:repeating-linear-gradient(
+    to bottom,
+    transparent 0px,
+    transparent 31px,
+    rgba(180,155,110,0.25) 31px,
+    rgba(180,155,110,0.25) 32px
+  );
+  background-position:0 68px;
+  pointer-events:none;
+  z-index:0;
+}
+/* left margin line */
+.page::after{
+  content:'';
+  position:absolute;
+  top:0;bottom:0;left:52px;
+  width:1.5px;
+  background:rgba(201,131,122,0.3);
+  pointer-events:none;
+  z-index:0;
+}
+
+/* ── PAGE HEADER (tab area) ── */
+.page-header{
+  position:relative;
+  z-index:2;
+  padding:18px 28px 12px 64px;
+  border-bottom:2px solid rgba(180,155,110,0.3);
+  display:flex;align-items:center;justify-content:space-between;
+  flex-shrink:0;
+}
+.page-title-hand{
+  font-family:'Caveat',cursive;
+  font-size:2rem;
+  font-weight:700;
+  color:var(--ink);
+  line-height:1;
+}
+.page-subtitle-hand{
+  font-family:'Caveat',cursive;
+  font-size:1rem;
+  color:var(--ink-light);
+  margin-top:2px;
+}
+.page-num{
+  font-family:'Caveat',cursive;
+  font-size:1.1rem;
+  color:var(--line);
+}
+.tab-stamp{
+  width:44px;height:44px;
+  border-radius:50%;
+  border:2.5px solid var(--rose);
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;
+}
+
+/* ── PAGE BODY ── */
+.page-body{
+  flex:1;
+  position:relative;
+  z-index:2;
+  padding:16px 28px 16px 64px;
+  overflow:hidden;
+}
+
+/* ── NAV TABS (bottom) ── */
+.notebook-nav{
+  position:absolute;
+  bottom:-48px;
+  left:0;right:0;
+  display:flex;
+  justify-content:center;
+  gap:10px;
+  z-index:60;
+}
+.nav-tab{
+  background:rgba(253,248,240,0.85);
+  border:none;
+  border-radius:0 0 10px 10px;
+  padding:8px 20px;
+  font-family:'Caveat',cursive;
+  font-size:1rem;
+  color:var(--ink-light);
+  cursor:pointer;
+  transition:all 0.2s;
+  letter-spacing:0.02em;
+  box-shadow:0 4px 12px rgba(0,0,0,0.15);
+}
+.nav-tab.active,.nav-tab:hover{
+  background:var(--rose);
+  color:white;
+}
+.nav-tab-arrow{
+  background:rgba(253,248,240,0.7);
+  border:none;
+  border-radius:50%;
+  width:36px;height:36px;
+  font-size:1.1rem;
+  cursor:pointer;
+  color:var(--ink);
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 4px 12px rgba(0,0,0,0.15);
+  transition:all 0.2s;
+  align-self:flex-start;
+  margin-top:4px;
+}
+.nav-tab-arrow:hover{background:var(--rose);color:white}
+
+/* ── PAGE 1: COVER ── */
+.cover-content{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  height:100%;
+  text-align:center;
+  gap:12px;
+}
+.cover-logo{
+  font-family:'Caveat',cursive;
+  font-size:3.4rem;
+  font-weight:700;
+  color:var(--ink);
+  line-height:1.1;
+}
+.cover-logo em{color:var(--rose);font-style:italic}
+.cover-tagline{
+  font-family:'Lora',serif;
+  font-size:1rem;
+  font-style:italic;
+  color:var(--ink-light);
+}
+.cover-doodle{margin:8px 0}
+.cover-badge{
+  background:var(--rose-light);
+  border:1.5px dashed var(--rose);
+  border-radius:100px;
+  padding:6px 20px;
+  font-family:'Caveat',cursive;
+  font-size:1rem;
+  color:var(--ink);
+}
+.cover-location{
+  font-family:'Caveat',cursive;
+  font-size:1.1rem;
+  color:var(--ink-light);
+  display:flex;align-items:center;gap:6px;
+  margin-top:4px;
+}
+.open-btn{
+  margin-top:12px;
+  background:var(--ink);
+  color:var(--paper);
+  border:none;
+  border-radius:100px;
+  padding:12px 32px;
+  font-family:'Caveat',cursive;
+  font-size:1.2rem;
+  cursor:pointer;
+  letter-spacing:0.05em;
+  transition:all 0.2s;
+  box-shadow:3px 3px 0 var(--rose);
+}
+.open-btn:hover{transform:translate(-2px,-2px);box-shadow:5px 5px 0 var(--rose)}
+
+/* ── PAGE 2: BOUQUETS ── */
+.products-list{display:flex;flex-direction:column;gap:14px;margin-top:4px}
+.product-row{
+  display:flex;align-items:center;gap:16px;
+  background:rgba(255,255,255,0.55);
+  border-radius:10px;
+  padding:12px 16px;
+  border:1px solid rgba(180,155,110,0.3);
+  transition:transform 0.2s,box-shadow 0.2s;
+  cursor:pointer;
+}
+.product-row:hover{transform:translateX(4px);box-shadow:3px 3px 0 var(--rose-light)}
+.product-icon{
+  width:56px;height:56px;
+  border-radius:50%;
+  background:var(--rose-light);
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;
+  border:2px dashed var(--rose);
+}
+.product-info{flex:1}
+.product-name{font-family:'Caveat',cursive;font-size:1.25rem;font-weight:600;color:var(--ink)}
+.product-desc{font-size:0.78rem;color:var(--ink-light);line-height:1.5;margin-top:2px}
+.product-price{
+  font-family:'Caveat',cursive;
+  font-size:1.3rem;
+  font-weight:700;
+  color:var(--sage);
+  flex-shrink:0;
+}
+.product-tag{
+  font-size:0.65rem;
+  background:var(--sage-light);
+  color:#3A5C30;
+  border-radius:100px;
+  padding:2px 8px;
+  margin-left:6px;
+  font-weight:500;
+}
+
+/* ── PAGE 3: CROCHET ── */
+.crochet-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px;
+  margin-top:4px;
+}
+.crochet-card{
+  background:rgba(255,255,255,0.55);
+  border:1px solid rgba(180,155,110,0.35);
+  border-radius:12px;
+  padding:14px;
+  transition:transform 0.2s;
+  cursor:pointer;
+  position:relative;
+}
+.crochet-card:hover{transform:rotate(-0.5deg) scale(1.02)}
+.crochet-card-img{
+  height:80px;
+  border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  margin-bottom:10px;
+  background:var(--sage-light);
+}
+.crochet-card h3{font-family:'Caveat',cursive;font-size:1.1rem;font-weight:600;color:var(--ink)}
+.crochet-card p{font-size:0.72rem;color:var(--ink-light);margin-top:2px;line-height:1.4}
+.crochet-card .price{font-family:'Caveat',cursive;font-size:1.1rem;color:var(--thread);margin-top:6px;font-weight:700}
+.corner-fold{
+  position:absolute;top:0;right:0;
+  width:22px;height:22px;
+  background:var(--paper3);
+  clip-path:polygon(100% 0,100% 100%,0 0);
+  border-radius:0 12px 0 0;
+}
+
+/* ── PAGE 4: STORY ── */
+.story-body{display:flex;gap:20px;height:100%}
+.story-left{flex:1;display:flex;flex-direction:column;gap:12px}
+.story-quote{
+  font-family:'Lora',serif;
+  font-size:1.05rem;
+  font-style:italic;
+  color:var(--ink);
+  line-height:1.7;
+  border-left:3px solid var(--rose);
+  padding-left:14px;
+  margin:4px 0;
+}
+.story-text{font-size:0.82rem;color:var(--ink-light);line-height:1.8}
+.story-sig{font-family:'Caveat',cursive;font-size:1.3rem;color:var(--rose);margin-top:8px}
+.story-doodle-area{
+  width:160px;
+  flex-shrink:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:10px;
+}
+.sticky-note{
+  background:#FFF9C4;
+  border:1px solid #E6D96A;
+  border-radius:4px;
+  padding:12px;
+  font-family:'Caveat',cursive;
+  font-size:0.95rem;
+  color:#5A4A00;
+  transform:rotate(2deg);
+  box-shadow:3px 3px 8px rgba(0,0,0,0.1);
+  width:100%;
+  line-height:1.5;
+}
+.sticky-note2{
+  background:#FFD6D6;
+  border:1px solid #E8A0A0;
+  border-radius:4px;
+  padding:10px;
+  font-family:'Caveat',cursive;
+  font-size:0.88rem;
+  color:#5A1A1A;
+  transform:rotate(-1.5deg);
+  box-shadow:3px 3px 8px rgba(0,0,0,0.1);
+  width:100%;
+  line-height:1.5;
+}
+
+/* ── PAGE 5: ORDER ── */
+.order-form{display:flex;flex-direction:column;gap:12px;margin-top:4px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-group{display:flex;flex-direction:column;gap:4px}
+.form-label{
+  font-family:'Caveat',cursive;
+  font-size:1rem;
+  color:var(--ink-light);
+}
+.form-input{
+  background:rgba(255,255,255,0.7);
+  border:none;
+  border-bottom:2px solid var(--line);
+  padding:6px 4px;
+  font-family:'Caveat',cursive;
+  font-size:1.05rem;
+  color:var(--ink);
+  outline:none;
+  transition:border-color 0.2s;
+  border-radius:0;
+}
+.form-input:focus{border-bottom-color:var(--rose)}
+.form-select{
+  background:rgba(255,255,255,0.7);
+  border:none;
+  border-bottom:2px solid var(--line);
+  padding:6px 4px;
+  font-family:'Caveat',cursive;
+  font-size:1.05rem;
+  color:var(--ink);
+  outline:none;
+  cursor:pointer;
+  appearance:none;
+}
+.form-textarea{
+  background:rgba(255,255,255,0.6);
+  border:1.5px dashed var(--line);
+  border-radius:8px;
+  padding:8px;
+  font-family:'Caveat',cursive;
+  font-size:1rem;
+  color:var(--ink);
+  outline:none;
+  resize:none;
+  height:70px;
+  line-height:1.8;
+}
+.form-textarea:focus{border-color:var(--rose)}
+.submit-btn{
+  background:var(--rose);
+  color:white;
+  border:none;
+  border-radius:100px;
+  padding:12px 32px;
+  font-family:'Caveat',cursive;
+  font-size:1.2rem;
+  cursor:pointer;
+  align-self:flex-start;
+  transition:all 0.2s;
+  box-shadow:3px 3px 0 var(--ink);
+  letter-spacing:0.05em;
+}
+.submit-btn:hover{transform:translate(-2px,-2px);box-shadow:5px 5px 0 var(--ink)}
+
+/* washi tape deco */
+.washi{
+  position:absolute;
+  height:18px;
+  background:repeating-linear-gradient(90deg,#F2D4CC,#E8C4B0 10px,#F2D4CC 10px,#F2D4CC 20px);
+  opacity:0.7;
+  border-radius:2px;
+  z-index:10;
+}
+.washi-top{top:-4px;left:40px;width:80px;transform:rotate(-1deg)}
+.washi-corner{top:8px;right:20px;width:60px;transform:rotate(2deg)}
+
+/* page number dots */
+.page-dots{
+  position:absolute;
+  bottom:14px;right:20px;
+  display:flex;gap:6px;
+  z-index:10;
+}
+.dot{
+  width:8px;height:8px;
+  border-radius:50%;
+  background:var(--line);
+  cursor:pointer;
+  transition:background 0.2s,transform 0.2s;
+}
+.dot.active{background:var(--rose);transform:scale(1.3)}
+</style>
+</head>
+<body>
+
+<div class="notebook">
+
+  <!-- Address bar above notebook -->
+  <div class="addr-bar">
+    <div style="display:flex;align-items:center;gap:1.5rem">
+      <div class="addr-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#F2D4CC" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+        Bhairahawa, Devkota Chowk
+      </div>
+      <div class="addr-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#F2D4CC" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81 19.79 19.79 0 01.02 1.18 2 2 0 012 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+        +977-071-XXXXXX
+      </div>
+      <div class="addr-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#F2D4CC" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Open: 9 AM – 7 PM
+      </div>
+    </div>
+    <div class="addr-socials">
+      <a href="#"><svg width="11" height="11" viewBox="0 0 24 24" fill="#F2D4CC"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg></a>
+      <a href="#"><svg width="11" height="11" viewBox="0 0 24 24" fill="#F2D4CC"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg></a>
+    </div>
+  </div>
+
+  <!-- Spiral rings -->
+  <div class="binding">
+    <div class="ring"></div><div class="ring"></div><div class="ring"></div>
+    <div class="ring"></div><div class="ring"></div><div class="ring"></div>
+    <div class="ring"></div><div class="ring"></div><div class="ring"></div>
+    <div class="ring"></div><div class="ring"></div><div class="ring"></div>
+  </div>
+
+  <!-- Pages stack -->
+  <div class="pages-stack">
+    <div class="page-ghost"></div>
+    <div class="page-ghost"></div>
+
+    <!-- PAGE 1: COVER -->
+    <div class="page active" id="page-1">
+      <div class="washi washi-top"></div>
+      <div class="page-body" style="display:flex;flex-direction:column;justify-content:center">
+        <div class="cover-content">
+          <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
+            <line x1="40" y1="72" x2="26" y2="36" stroke="#5C7054" stroke-width="2.5" stroke-linecap="round"/>
+            <line x1="40" y1="72" x2="40" y2="30" stroke="#5C7054" stroke-width="2.5" stroke-linecap="round"/>
+            <line x1="40" y1="72" x2="54" y2="36" stroke="#5C7054" stroke-width="2.5" stroke-linecap="round"/>
+            <ellipse cx="28" cy="34" rx="8" ry="5" fill="#A8B89A" transform="rotate(-25 28 34)"/>
+            <ellipse cx="52" cy="34" rx="8" ry="5" fill="#A8B89A" transform="rotate(25 52 34)"/>
+            <path d="M27 58 Q40 64 53 58 L56 78 Q40 82 24 78Z" fill="#D4A574" opacity="0.65"/>
+            <circle cx="26" cy="30" r="12" fill="#C9837A" opacity="0.9"/>
+            <circle cx="26" cy="30" r="7" fill="#D4948C"/>
+            <circle cx="26" cy="30" r="3" fill="#F2D4CC"/>
+            <circle cx="40" cy="22" r="14" fill="#C9837A"/>
+            <circle cx="40" cy="22" r="8" fill="#D4948C"/>
+            <circle cx="40" cy="22" r="3.5" fill="#F2D4CC"/>
+            <circle cx="54" cy="30" r="11" fill="#E8BFAD"/>
+            <circle cx="54" cy="30" r="6" fill="#D4948C"/>
+            <circle cx="54" cy="30" r="2.5" fill="#F2D4CC"/>
+            <circle cx="16" cy="40" r="7" fill="#D4A574" opacity="0.7"/>
+            <circle cx="64" cy="38" r="7" fill="#A8B89A" opacity="0.8"/>
+          </svg>
+
+          <div class="cover-logo">Blooms <em>&</em> Threads</div>
+          <div class="cover-tagline">handcrafted bouquets · crochet art · made with love</div>
+
+          <div class="cover-badge">✿ Since 2020 · Bhairahawa ✿</div>
+
+          <div class="cover-location">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6B4C2A" stroke-width="2" stroke-linecap="round"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+            Devkota Chowk, Bhairahawa
+          </div>
+
+          <button class="open-btn" onclick="goTo(2)">Open the shop →</button>
+        </div>
+      </div>
+      <div class="page-dots">
+        <div class="dot active" onclick="goTo(1)"></div>
+        <div class="dot" onclick="goTo(2)"></div>
+        <div class="dot" onclick="goTo(3)"></div>
+        <div class="dot" onclick="goTo(4)"></div>
+        <div class="dot" onclick="goTo(5)"></div>
+      </div>
+    </div>
+
+    <!-- PAGE 2: BOUQUETS -->
+    <div class="page" id="page-2">
+      <div class="washi washi-corner"></div>
+      <div class="page-header">
+        <div>
+          <div class="page-title-hand">🌸 Fresh Bouquets</div>
+          <div class="page-subtitle-hand">handpicked & wrapped with love</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="page-num">pg. 02</div>
+          <div class="tab-stamp">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#C9837A" stroke-width="1.8"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/></svg>
+          </div>
+        </div>
+      </div>
+      <div class="page-body">
+        <div class="products-list">
+          <div class="product-row">
+            <div class="product-icon">
+              <svg width="28" height="32" viewBox="0 0 28 32" fill="none"><line x1="14" y1="30" x2="10" y2="16" stroke="#5C7054" stroke-width="1.8" stroke-linecap="round"/><line x1="14" y1="30" x2="14" y2="13" stroke="#5C7054" stroke-width="1.8" stroke-linecap="round"/><line x1="14" y1="30" x2="18" y2="16" stroke="#5C7054" stroke-width="1.8" stroke-linecap="round"/><circle cx="10" cy="13" r="5" fill="#C9837A" opacity="0.9"/><circle cx="10" cy="13" r="2.5" fill="#F2D4CC"/><circle cx="14" cy="10" r="6" fill="#C9837A"/><circle cx="14" cy="10" r="3" fill="#F2D4CC"/><circle cx="18" cy="13" r="4.5" fill="#E8BFAD"/><circle cx="18" cy="13" r="2" fill="#D4948C"/></svg>
+            </div>
+            <div class="product-info">
+              <div class="product-name">Blush Garden Bundle</div>
+              <div class="product-desc">Roses, baby's breath & eucalyptus — classic romance</div>
+            </div>
+            <div class="product-price">NPR 1,800</div>
+          </div>
+          <div class="product-row">
+            <div class="product-icon" style="background:#C8DDB8">
+              <svg width="28" height="32" viewBox="0 0 28 32" fill="none"><line x1="14" y1="30" x2="9" y2="15" stroke="#5C7054" stroke-width="1.8" stroke-linecap="round"/><line x1="14" y1="30" x2="19" y2="15" stroke="#5C7054" stroke-width="1.8" stroke-linecap="round"/><line x1="14" y1="30" x2="14" y2="12" stroke="#5C7054" stroke-width="1.8" stroke-linecap="round"/><ellipse cx="9" cy="13" rx="5" ry="7" fill="#A8B89A"/><ellipse cx="19" cy="13" rx="5" ry="7" fill="#A8B89A"/><ellipse cx="14" cy="10" rx="5" ry="7" fill="#7A9B6E"/></svg>
+            </div>
+            <div class="product-info">
+              <div class="product-name">Wildflower Meadow<span class="product-tag">bestseller</span></div>
+              <div class="product-desc">Seasonal wildflowers, lavender & dried grasses</div>
+            </div>
+            <div class="product-price">NPR 2,200</div>
+          </div>
+          <div class="product-row">
+            <div class="product-icon" style="background:#FFF9C4">
+              <svg width="28" height="32" viewBox="0 0 28 32" fill="none"><circle cx="14" cy="14" r="8" fill="#F4C430" opacity="0.8"/><circle cx="14" cy="14" r="4.5" fill="#E6A800"/><circle cx="14" cy="14" r="2" fill="#C68000"/><ellipse cx="14" cy="5" rx="3" ry="5" fill="#F4C430" opacity="0.7"/><ellipse cx="14" cy="23" rx="3" ry="5" fill="#F4C430" opacity="0.7"/><ellipse cx="5" cy="14" rx="5" ry="3" fill="#F4C430" opacity="0.7"/><ellipse cx="23" cy="14" rx="5" ry="3" fill="#F4C430" opacity="0.7"/></svg>
+            </div>
+            <div class="product-info">
+              <div class="product-name">Sunflower Joy</div>
+              <div class="product-desc">Bright sunflowers & golden fillers — cheerful energy</div>
+            </div>
+            <div class="product-price">NPR 1,500</div>
+          </div>
+          <div class="product-row">
+            <div class="product-icon" style="background:#FFD6D6">
+              <svg width="28" height="32" viewBox="0 0 28 32" fill="none"><circle cx="14" cy="13" r="7" fill="#C9837A"/><circle cx="14" cy="13" r="4" fill="#E8BFAD"/><circle cx="14" cy="13" r="1.8" fill="#F2D4CC"/><ellipse cx="7" cy="10" rx="4" ry="6" fill="#D4948C" opacity="0.7" transform="rotate(-20 7 10)"/><ellipse cx="21" cy="10" rx="4" ry="6" fill="#D4948C" opacity="0.7" transform="rotate(20 21 10)"/><line x1="14" y1="28" x2="14" y2="18" stroke="#5C7054" stroke-width="2"/></svg>
+            </div>
+            <div class="product-info">
+              <div class="product-name">Bridal Dream<span class="product-tag">custom</span></div>
+              <div class="product-desc">Custom wedding bouquets — order 7 days ahead</div>
+            </div>
+            <div class="product-price">NPR 4,500+</div>
+          </div>
+        </div>
+      </div>
+      <div class="page-dots">
+        <div class="dot" onclick="goTo(1)"></div>
+        <div class="dot active" onclick="goTo(2)"></div>
+        <div class="dot" onclick="goTo(3)"></div>
+        <div class="dot" onclick="goTo(4)"></div>
+        <div class="dot" onclick="goTo(5)"></div>
+      </div>
+    </div>
+
+    <!-- PAGE 3: CROCHET -->
+    <div class="page" id="page-3">
+      <div class="page-header">
+        <div>
+          <div class="page-title-hand">🧶 Crochet Art</div>
+          <div class="page-subtitle-hand">every stitch made by hand</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="page-num">pg. 03</div>
+          <div class="tab-stamp" style="border-color:var(--sage)">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#7A9B6E" stroke-width="1.8"><circle cx="12" cy="12" r="9" stroke-dasharray="4 3"/><circle cx="12" cy="12" r="4"/></svg>
+          </div>
+        </div>
+      </div>
+      <div class="page-body">
+        <div class="crochet-grid">
+          <div class="crochet-card">
+            <div class="corner-fold"></div>
+            <div class="crochet-card-img">
+              <svg width="56" height="56" viewBox="0 0 56 56" fill="none"><circle cx="28" cy="28" r="20" stroke="#7A9B6E" stroke-width="2" stroke-dasharray="5 4"/><circle cx="28" cy="28" r="13" stroke="#5C7054" stroke-width="1.5" stroke-dasharray="4 5"/><circle cx="28" cy="28" r="7" fill="#A8B89A" opacity="0.5"/><circle cx="28" cy="28" r="3.5" fill="#5C7054"/><ellipse cx="28" cy="7" rx="4" ry="7" fill="#D4A574" opacity="0.8"/><ellipse cx="28" cy="49" rx="4" ry="7" fill="#D4A574" opacity="0.8"/><ellipse cx="7" cy="28" rx="7" ry="4" fill="#D4A574" opacity="0.8"/><ellipse cx="49" cy="28" rx="7" ry="4" fill="#D4A574" opacity="0.8"/></svg>
+            </div>
+            <h3>Sunflower Coaster</h3>
+            <p>Set of 4 · cotton yarn · washable</p>
+            <div class="price">NPR 950</div>
+          </div>
+          <div class="crochet-card" style="background:rgba(255,249,200,0.6)">
+            <div class="corner-fold"></div>
+            <div class="crochet-card-img" style="background:#FFF9C4">
+              <svg width="56" height="56" viewBox="0 0 56 56" fill="none"><path d="M28 8 Q36 20 28 28 Q20 20 28 8Z" fill="#F4C430" opacity="0.8"/><path d="M48 28 Q36 36 28 28 Q36 20 48 28Z" fill="#F4C430" opacity="0.8"/><path d="M28 48 Q20 36 28 28 Q36 36 28 48Z" fill="#F4C430" opacity="0.8"/><path d="M8 28 Q20 20 28 28 Q20 36 8 28Z" fill="#F4C430" opacity="0.8"/><circle cx="28" cy="28" r="8" fill="#E6A800"/><circle cx="28" cy="28" r="4" fill="#C68000"/></svg>
+            </div>
+            <h3>Daisy Hair Clips</h3>
+            <p>Pair · white & yellow · handmade</p>
+            <div class="price">NPR 450</div>
+          </div>
+          <div class="crochet-card" style="background:rgba(255,214,214,0.5)">
+            <div class="corner-fold"></div>
+            <div class="crochet-card-img" style="background:#FFD6D6">
+              <svg width="56" height="56" viewBox="0 0 56 56" fill="none"><rect x="10" y="14" width="36" height="28" rx="5" stroke="#C9837A" stroke-width="2" stroke-dasharray="4 3"/><rect x="16" y="20" width="24" height="16" rx="3" fill="#F2D4CC" opacity="0.5"/><circle cx="28" cy="28" r="5" fill="#C9837A" opacity="0.7"/><circle cx="28" cy="28" r="2.5" fill="#F2D4CC"/></svg>
+            </div>
+            <h3>Flower Tote Bag</h3>
+            <p>Handwoven · cotton · market size</p>
+            <div class="price">NPR 1,800</div>
+          </div>
+          <div class="crochet-card" style="background:rgba(200,221,184,0.5)">
+            <div class="corner-fold"></div>
+            <div class="crochet-card-img" style="background:#C8DDB8">
+              <svg width="56" height="56" viewBox="0 0 56 56" fill="none"><circle cx="28" cy="20" r="12" fill="none" stroke="#5C7054" stroke-width="2" stroke-dasharray="5 3"/><circle cx="28" cy="20" r="7" fill="#A8B89A" opacity="0.6"/><circle cx="28" cy="20" r="3" fill="#5C7054"/><line x1="28" y1="32" x2="28" y2="48" stroke="#5C7054" stroke-width="2.5" stroke-linecap="round"/><ellipse cx="20" cy="44" rx="7" ry="4" fill="#A8B89A" opacity="0.5" transform="rotate(-20 20 44)"/><ellipse cx="36" cy="44" rx="7" ry="4" fill="#A8B89A" opacity="0.5" transform="rotate(20 36 44)"/></svg>
+            </div>
+            <h3>Potted Crochet Plant</h3>
+            <p>Forever bloom · no watering needed</p>
+            <div class="price">NPR 1,200</div>
+          </div>
+        </div>
+      </div>
+      <div class="page-dots">
+        <div class="dot" onclick="goTo(1)"></div>
+        <div class="dot" onclick="goTo(2)"></div>
+        <div class="dot active" onclick="goTo(3)"></div>
+        <div class="dot" onclick="goTo(4)"></div>
+        <div class="dot" onclick="goTo(5)"></div>
+      </div>
+    </div>
+
+    <!-- PAGE 4: STORY -->
+    <div class="page" id="page-4">
+      <div class="page-header">
+        <div>
+          <div class="page-title-hand">📖 Our Story</div>
+          <div class="page-subtitle-hand">born from love & craft</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="page-num">pg. 04</div>
+        </div>
+      </div>
+      <div class="page-body">
+        <div class="story-body">
+          <div class="story-left">
+            <div class="story-quote">"Every stitch tells a story. Every bloom holds a memory."</div>
+            <div class="story-text">Born in Bhairahawa from a love of natural beauty and the warmth of handmade things, Blooms & Threads began at a small table with yarn, scissors, and fresh flowers from the local bazaar.</div>
+            <div class="story-text">Today we craft custom wedding bouquets, crochet gifts, home décor and keepsakes — each piece made entirely by hand, with intention, care, and joy. No two pieces are ever the same.</div>
+            <div class="story-text">We believe flowers shouldn't fade and love shouldn't unravel.</div>
+            <div class="story-sig">— Sita, founder ✿</div>
+          </div>
+          <div class="story-doodle-area">
+            <div class="sticky-note">
+              📍 Find us at<br>Devkota Chowk,<br>Bhairahawa<br><br>Mon–Sat<br>9 AM – 7 PM
+            </div>
+            <div class="sticky-note2">
+              Custom orders<br>welcome! 🌸<br>DM on Instagram<br>or call us ☎
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="page-dots">
+        <div class="dot" onclick="goTo(1)"></div>
+        <div class="dot" onclick="goTo(2)"></div>
+        <div class="dot" onclick="goTo(3)"></div>
+        <div class="dot active" onclick="goTo(4)"></div>
+        <div class="dot" onclick="goTo(5)"></div>
+      </div>
+    </div>
+
+    <!-- PAGE 5: ORDER -->
+    <div class="page" id="page-5">
+      <div class="page-header">
+        <div>
+          <div class="page-title-hand">✉️ Place an Order</div>
+          <div class="page-subtitle-hand">fill in & we'll get back to you</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="page-num">pg. 05</div>
+        </div>
+      </div>
+      <div class="page-body">
+        <div class="order-form">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Your name</label>
+              <input class="form-input" type="text" placeholder="e.g. Sita Sharma">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Phone / WhatsApp</label>
+              <input class="form-input" type="text" placeholder="+977-98XXXXXXXX">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">What would you like?</label>
+              <select class="form-select">
+                <option>Fresh Bouquet</option>
+                <option>Crochet Flowers</option>
+                <option>Crochet Accessory</option>
+                <option>Gift Bundle</option>
+                <option>Wedding / Custom</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Occasion</label>
+              <select class="form-select">
+                <option>Birthday</option>
+                <option>Anniversary</option>
+                <option>Wedding</option>
+                <option>Gift</option>
+                <option>Home Décor</option>
+                <option>Just because 🌸</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Any special notes?</label>
+            <textarea class="form-textarea" placeholder="Color preferences, delivery date, message on card..."></textarea>
+          </div>
+          <button class="submit-btn">Send order ✿</button>
+        </div>
+      </div>
+      <div class="page-dots">
+        <div class="dot" onclick="goTo(1)"></div>
+        <div class="dot" onclick="goTo(2)"></div>
+        <div class="dot" onclick="goTo(3)"></div>
+        <div class="dot" onclick="goTo(4)"></div>
+        <div class="dot active" onclick="goTo(5)"></div>
+      </div>
+    </div>
+
+  </div><!-- /pages-stack -->
+
+  <!-- Bottom navigation tabs -->
+  <div class="notebook-nav">
+    <button class="nav-tab-arrow" onclick="prev()">←</button>
+    <button class="nav-tab active" id="tab-1" onclick="goTo(1)">Cover</button>
+    <button class="nav-tab" id="tab-2" onclick="goTo(2)">Bouquets</button>
+    <button class="nav-tab" id="tab-3" onclick="goTo(3)">Crochet</button>
+    <button class="nav-tab" id="tab-4" onclick="goTo(4)">Our Story</button>
+    <button class="nav-tab" id="tab-5" onclick="goTo(5)">Order</button>
+    <button class="nav-tab-arrow" onclick="next()">→</button>
+  </div>
+
+</div><!-- /notebook -->
+
+<script>
+let current = 1;
+const total = 5;
+
+function goTo(n) {
+  document.getElementById('page-' + current).classList.remove('active');
+  document.getElementById('tab-' + current).classList.remove('active');
+  current = n;
+  document.getElementById('page-' + current).classList.add('active');
+  document.getElementById('tab-' + current).classList.add('active');
+}
+
+function next() { goTo(current < total ? current + 1 : 1); }
+function prev() { goTo(current > 1 ? current - 1 : total); }
+
+document.addEventListener('keydown', e => {
+  if(e.key === 'ArrowRight') next();
+  if(e.key === 'ArrowLeft') prev();
+});
+</script>
+</body>
+</html>
